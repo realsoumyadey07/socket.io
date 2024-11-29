@@ -1,35 +1,44 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useMemo, useState } from "react";
+import { io } from "socket.io-client";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const socket = useMemo(()=>io("http://localhost:8000"),[]);
+  const [message, setMessage] = useState("");
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    socket.emit("message", message)
+    setMessage("")
+  };
+  useEffect(() => {
+    socket.on("connect", () => {
+      console.log("Socket client connected!", socket.id);
+    });
+    socket.on("welcome", (s) => {
+      console.log(s);
+    });
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   return (
-    <>
+    <div>
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <p>Welcome to Socket.io</p>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="message"
+          id="message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Type your message here..."
+        />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  );
+};
 
-export default App
+export default App;
